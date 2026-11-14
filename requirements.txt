@@ -1,0 +1,14 @@
+fastapi==0.163.0
+uvicorn[standard]==0.54.0
+requests==2.34.2
+psycopg2-binary==2.9.13
+sentence-transformers==6.3.0
+groq==1.7.0
+
+# Prompt Guard (opcional): si no se configura HF_TOKEN, el agente sigue
+# funcionando solo con Llama Guard (ver app/services/safety_service.py).
+# Se instala siempre porque el modelo es pequeño (86M de parametros) y
+# corre bien en CPU, a diferencia del modelo conversacional de 8B.
+huggingface_hub==2.4.0
+transformers==5.23.0
+torch==2.15.0
