@@ -9,6 +9,15 @@ en el codigo ni en un archivo que se suba al repo.
 
 import os
 
+from dotenv import load_dotenv
+
+# Solo tiene efecto en desarrollo local: carga las variables del archivo
+# .env al entorno del proceso (python-dotenv nunca sobreescribe una
+# variable que ya exista en el entorno). En Railway no hay archivo .env
+# -- las variables ya estan inyectadas directo al proceso -- asi que esta
+# llamada simplemente no encuentra nada que cargar y no hace nada.
+load_dotenv()
+
 
 class ConfigError(RuntimeError):
     """Falta una variable de entorno requerida."""
