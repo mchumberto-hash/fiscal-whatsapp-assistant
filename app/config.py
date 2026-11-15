@@ -45,8 +45,8 @@ WABA_ID = _opcional("WABA_TOKEN_ID")
 
 # --- Groq (modelo conversacional + Llama Guard) ---
 GROQ_API_KEY = _requerida("GROQ_API_KEY")
-MODELO_CONVERSACIONAL = _opcional("MODELO_CONVERSACIONAL", "llama-3.1-8b-instant")
-MODELO_LLAMA_GUARD = _opcional("MODELO_LLAMA_GUARD", "llama-guard-3-8b")
+MODELO_CONVERSACIONAL = _opcional("MODELO_CONVERSACIONAL", "openai/gpt-oss-20b")
+MODELO_LLAMA_GUARD = _opcional("MODELO_LLAMA_GUARD", "openai/gpt-oss-safeguard-20b")
 
 # --- Supabase / Postgres (RAG + estado) ---
 SUPABASE_DB_URL = _requerida("SUPABASE_DB_URL")
