@@ -10,6 +10,31 @@ groq==1.7.0
 # funcionando solo con Llama Guard (ver app/services/safety_service.py).
 # Se instala siempre porque el modelo es pequeño (86M de parametros) y
 # corre bien en CPU, a diferencia del modelo conversacional de 8B.
+#
+# Las tres versiones de abajo (numpy, huggingface_hub, transformers) estan
+# fijadas por debajo de lo "mas nuevo" a proposito, por compatibilidad con
+# Mac Intel: PyTorch dejo de publicar builds para Mac Intel (x86_64) despues
+# de la 2.2.2, y transformers>=5.1.0 requiere torch>=2.4 (las versiones mas
+# nuevas de transformers incluso requieren torch>=2.6) -- combinar
+# transformers reciente con torch 2.2.2 rompe el import con un
+# "NameError: name 'nn' is not defined". transformers==5.0.0 es la ultima
+# version cuyo minimo de torch (2.2) es compatible con el tope de Mac Intel,
+# pero esa version exige huggingface_hub<2.0. numpy se fija a <2 porque
+# torch 2.2.2 se compilo contra numpy 1.x (si no, sale un warning de
+# incompatibilidad ABI de numpy, aunque no siempre truena el import).
+#
+# El indice normal de PyPI publica torch para Linux con varios paquetes
+# nvidia-*cu12 (cudnn, cublas, cusolver, etc.) como dependencia -- varios
+# cientos de MB que Railway descarga en cada build aunque nunca se usan
+# (Railway no tiene GPU). El indice oficial de PyTorch para CPU publica la
+# misma version sin esas dependencias. No hace falta escribir "2.2.2+cpu"
+# a mano: pip prefiere automaticamente la build de este indice sobre la de
+# PyPI porque, segun el estandar de versionado de Python (PEP 440), una
+# version con sufijo local (p. ej. "2.2.2+cpu") se considera mas nueva que
+# la misma version sin sufijo ("2.2.2"), y aun asi ambas cumplen con el
+# requisito "torch==2.2.2" de abajo. En Mac no cambia nada: ahi no hay
+# version con CUDA de por medio, pip simplemente sigue usando la de PyPI.
+--extra-index-url https://download.pytorch.org/whl/cpu
 numpy==1.26.4
 huggingface_hub==1.9.2
 transformers==5.0.0
