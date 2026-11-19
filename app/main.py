@@ -21,7 +21,7 @@ from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import PlainTextResponse
 import psycopg2
 
-from app.config import VERIFY_TOKEN, WHATSAPP_APP_SECRET
+from app.config import METRICAS_TOKEN, VERIFY_TOKEN, WHATSAPP_APP_SECRET
 from app.database import ejecutar, inicializar_esquema
 from app.orchestrator import procesar_y_responder
 from app.services.metrics_service import registrar_evento, resumen_metricas
@@ -106,9 +106,22 @@ def _marcar_procesado(wamid: str, numero: str) -> bool:
         return False
 
 
+def _metricas_autorizadas(token_recibido: str | None) -> bool:
+    """Protege /metricas con un token simple por query param. Opcional por
+    compatibilidad: si METRICAS_TOKEN no esta configurado, deja pasar pero
+    avisa en el log (mismo patron que _firma_valida arriba)."""
+    if not METRICAS_TOKEN:
+        logger.warning("METRICAS_TOKEN no configurado: /metricas sigue siendo publico.")
+        return True
+    return token_recibido is not None and hmac.compare_digest(token_recibido, METRICAS_TOKEN)
+
+
 @app.get("/metricas")
-async def ver_metricas():
-    """Reporte basico -- mismo contenido que `resumen_metricas()` del notebook (celda 47), ahora como endpoint."""
+async def ver_metricas(request: Request):
+    """Reporte basico -- mismo contenido que `resumen_metricas()` del notebook (celda 47), ahora como endpoint.
+    Protegido por METRICAS_TOKEN: /metricas?token=... (ver _metricas_autorizadas)."""
+    if not _metricas_autorizadas(request.query_params.get("token")):
+        return PlainTextResponse("no autorizado", status_code=403)
     return resumen_metricas()
 
 

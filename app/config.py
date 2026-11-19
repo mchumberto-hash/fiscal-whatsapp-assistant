@@ -62,6 +62,12 @@ SUPABASE_DB_URL = _requerida("SUPABASE_DB_URL")
 HF_TOKEN = _opcional("HF_TOKEN")
 PROMPT_GUARD_MODELO = _opcional("PROMPT_GUARD_MODELO", "meta-llama/Llama-Prompt-Guard-2-86M")
 
+# --- Endpoint /metricas ---
+# Token simple para proteger el reporte de metricas (ver app/main.py).
+# Opcional por compatibilidad: si falta, /metricas sigue siendo publico
+# (queda un aviso en el log). Se manda como query param: /metricas?token=...
+METRICAS_TOKEN = _opcional("METRICAS_TOKEN")
+
 # --- Umbral de similitud para el RAG fiscal ---
 # Calibrado en el notebook original (celda 18d) con el set de evaluacion de
 # recall@k / tasa de falso positivo: 0.56 -> 80% recall, 0% falsos positivos.
