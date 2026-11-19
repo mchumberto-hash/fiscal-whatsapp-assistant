@@ -43,6 +43,13 @@ WHATSAPP_TOKEN = _requerida("WHATSAPP_ACCESS_TOKEN")
 PHONE_ID = _requerida("PHONE_NUMBER_ID")
 WABA_ID = _opcional("WABA_TOKEN_ID")
 
+# App Secret de la app de Meta for Developers (Configuracion > Basica).
+# Se usa para validar la firma X-Hub-Signature-256 de cada POST /webhook y
+# confirmar que realmente viene de Meta (ver app/main.py). Opcional por
+# compatibilidad: si falta, el webhook sigue funcionando pero sin validar
+# la firma, y queda un aviso en el log cada vez que llega un mensaje.
+WHATSAPP_APP_SECRET = _opcional("WHATSAPP_APP_SECRET")
+
 # --- Groq (modelo conversacional + Llama Guard) ---
 GROQ_API_KEY = _requerida("GROQ_API_KEY")
 MODELO_CONVERSACIONAL = _opcional("MODELO_CONVERSACIONAL", "openai/gpt-oss-20b")

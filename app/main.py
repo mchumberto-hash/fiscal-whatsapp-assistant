@@ -12,6 +12,8 @@ Lo que cambia respecto al notebook:
   (evento `startup`), no celda por celda.
 """
 
+import hashlib
+import hmac
 import logging
 from contextlib import asynccontextmanager
 
@@ -19,7 +21,7 @@ from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import PlainTextResponse
 import psycopg2
 
-from app.config import VERIFY_TOKEN
+from app.config import VERIFY_TOKEN, WHATSAPP_APP_SECRET
 from app.database import ejecutar, inicializar_esquema
 from app.orchestrator import procesar_y_responder
 from app.services.metrics_service import registrar_evento, resumen_metricas
@@ -27,6 +29,30 @@ from app.services.whatsapp_service import normalizar_numero_mx
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("fiscal_assistant.main")
+
+
+def _firma_valida(cuerpo_crudo: bytes, firma_header: str | None) -> bool:
+    """Valida que un POST a /webhook realmente venga de Meta, comparando el
+    HMAC-SHA256 del cuerpo crudo (con el App Secret como llave) contra el
+    header X-Hub-Signature-256 que Meta manda en cada entrega.
+
+    Sin esto, cualquiera que conozca la URL del webhook podria mandar
+    mensajes falsos y hacer que el asistente responda (usando el token
+    permanente de WhatsApp) a numeros arbitrarios.
+    """
+    if not WHATSAPP_APP_SECRET:
+        logger.warning(
+            "WHATSAPP_APP_SECRET no configurado: no se esta validando la "
+            "firma de Meta en POST /webhook."
+        )
+        return True
+    if not firma_header or not firma_header.startswith("sha256="):
+        return False
+    firma_esperada = hmac.new(
+        WHATSAPP_APP_SECRET.encode(), cuerpo_crudo, hashlib.sha256
+    ).hexdigest()
+    firma_recibida = firma_header[len("sha256="):]
+    return hmac.compare_digest(firma_esperada, firma_recibida)
 
 
 @asynccontextmanager
@@ -49,6 +75,11 @@ async def verificar_webhook(request: Request):
 
 @app.post("/webhook")
 async def recibir_mensaje(request: Request, background_tasks: BackgroundTasks):
+    cuerpo_crudo = await request.body()
+    if not _firma_valida(cuerpo_crudo, request.headers.get("x-hub-signature-256")):
+        logger.warning("Firma de Meta invalida en POST /webhook; peticion rechazada.")
+        return PlainTextResponse("firma invalida", status_code=403)
+
     body = await request.json()
     try:
         mensaje = body["entry"][0]["changes"][0]["value"]["messages"][0]
