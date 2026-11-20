@@ -112,4 +112,21 @@ def inicializar_esquema() -> None:
     """)
     ejecutar("CREATE INDEX IF NOT EXISTS idx_eventos_tipo ON eventos (tipo);")
 
+    # Supabase expone automaticamente cada tabla del esquema "public" por su
+    # API REST (PostgREST), usando la llave "anon" -- que no es secreta, esta
+    # pensada para ser publica. Sin RLS activado, cualquiera con esa llave y
+    # la URL del proyecto podria leer/editar/borrar estas tablas directo por
+    # esa API, sin pasar por esta app. El rol `postgres` que usa esta app (via
+    # SUPABASE_DB_URL) pasa por encima de RLS automaticamente, asi que esto no
+    # afecta a esta app para nada -- solo cierra el acceso publico via REST.
+    # Idempotente: volver a activar RLS si ya esta activado no truena.
+    ejecutar("ALTER TABLE conversaciones ENABLE ROW LEVEL SECURITY;")
+    ejecutar("ALTER TABLE mensajes_procesados ENABLE ROW LEVEL SECURITY;")
+    ejecutar("ALTER TABLE catalogo_obligaciones ENABLE ROW LEVEL SECURITY;")
+    ejecutar("ALTER TABLE eventos ENABLE ROW LEVEL SECURITY;")
+    # documentos_fiscales la crea scripts/migrar_base_fiscal.py, no esta
+    # funcion -- por eso el IF EXISTS, por si esta funcion corre antes de esa
+    # migracion en un entorno nuevo.
+    ejecutar("ALTER TABLE IF EXISTS documentos_fiscales ENABLE ROW LEVEL SECURITY;")
+
     logger.info("Esquema de base de datos verificado/creado.")
