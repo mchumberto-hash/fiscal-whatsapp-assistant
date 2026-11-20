@@ -12,9 +12,19 @@ Lo que cambia respecto al notebook:
   (evento `startup`), no celda por celda.
 """
 
+import logging
+
+# force=True: uvicorn configura su propio logging antes de cargar esta app,
+# asi que sin esto logging.basicConfig() no hace nada (solo actua si nadie
+# configuro el logger raiz antes). Sin force=True, los logger.info() de
+# exito de varios modulos (p. ej. app.services.safety_service al cargar
+# Prompt Guard) se descartan en silencio, y solo se alcanzan a ver los
+# logger.warning() de error -- dando la falsa impresion de que algo fallo
+# cuando en realidad solo no se veia el aviso de que funciono.
+logging.basicConfig(level=logging.INFO, force=True)
+
 import hashlib
 import hmac
-import logging
 from contextlib import asynccontextmanager
 
 from fastapi import BackgroundTasks, FastAPI, Request
@@ -27,7 +37,6 @@ from app.orchestrator import procesar_y_responder
 from app.services.metrics_service import registrar_evento, resumen_metricas
 from app.services.whatsapp_service import normalizar_numero_mx
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("fiscal_assistant.main")
 
 
